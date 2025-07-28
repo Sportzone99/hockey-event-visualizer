@@ -1,0 +1,19 @@
+
+body {
+  font-family: sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 20px;
+}
+.container {
+  max-width: 1200px;
+  margin: auto;
+}
+#rink-container {
+  position: relative;
+  width: 100%;
+}
+#plot {
+  width: 100%;
+  height: auto;
+}
