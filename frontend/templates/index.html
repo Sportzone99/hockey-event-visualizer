@@ -1,20 +1,271 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hockey Event Visualizer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏒</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/styles.css">
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <h1>Hockey Event Visualizer</h1>
-    <div id="rink-container">
-      <img id="rink" src="/static/rink.png" alt="Hockey Rink">
-      <div id="plot"></div>
+  <div class="app-container">
+    <!-- Compact Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h1><i class="fas fa-hockey-puck"></i> Shots Analytics</h1>
+          <div class="game-selector">
+            <select id="game-selector" class="game-select">
+              <option value="">Select Game...</option>
+            </select>
+          </div>
+        </div>
+        <div class="header-navigation">
+          <nav class="nav-links">
+            <a href="/" class="nav-link active">
+              <i class="fas fa-hockey-puck"></i>
+              <span>Shot Analysis</span>
+            </a>
+            <a href="/faceoffs" class="nav-link">
+              <i class="fas fa-dot-circle"></i>
+              <span>Faceoff Analysis</span>
+            </a>
+          </nav>
+          <div class="team-legends">
+            <div class="team-badge usa">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/USA_hockey_logo.gif/500px-USA_hockey_logo.gif" alt="USA" class="team-logo">
+              <span>United States</span>
+            </div>
+            <div class="team-badge canada">
+              <img src="https://assets.leaguestat.com/hockeycanada/logos/355.png" alt="Canada" class="team-logo">
+              <span>Canada</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area with Sidebar Layout -->
+    <div class="main-container">
+      <!-- Left Sidebar Controls -->
+      <div class="control-sidebar">
+        
+        <!-- Shot Analysis Modes -->
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">
+            <i class="fas fa-chart-area"></i>
+            Analysis Mode
+          </h3>
+          <div class="shot-view-switcher">
+            <button class="shot-view-btn active" data-view="for-against">
+              <i class="fas fa-exchange-alt"></i>
+              <span>For vs Against</span>
+            </button>
+            <button class="shot-view-btn" data-view="zones">
+              <i class="fas fa-bullseye"></i>
+              <span>Shot Zones</span>
+            </button>
+            <button class="shot-view-btn" data-view="types">
+              <i class="fas fa-hockey-puck"></i>
+              <span>Shot Types</span>
+            </button>
+            <button class="shot-view-btn" data-view="outcomes">
+              <i class="fas fa-chart-pie"></i>
+              <span>Outcomes</span>
+            </button>
+            <button class="shot-view-btn" data-view="heat-map">
+              <i class="fas fa-fire"></i>
+              <span>Heat Map</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Shot Filters -->
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">
+            <i class="fas fa-filter"></i>
+            Shot Filters
+          </h3>
+          <div class="filter-grid">
+            <div class="filter-item">
+              <label class="filter-label">Outcome</label>
+              <select id="shot-outcome-filter" class="select-input">
+                <option value="all">All Shots</option>
+                <option value="goal">Goals Only</option>
+                <option value="on-net">On Net</option>
+                <option value="blocked">Blocked</option>
+                <option value="missed">Missed</option>
+              </select>
+            </div>
+            
+            <div class="filter-item">
+              <label class="filter-label">Type</label>
+              <select id="shot-type-filter" class="select-input">
+                <option value="all">All Types</option>
+                <option value="wristshot">Wristshot</option>
+                <option value="snapshot">Snapshot</option>
+                <option value="slapshot">Slapshot</option>
+                <option value="deflection">Deflection</option>
+                <option value="wrap-around">Wrap Around</option>
+              </select>
+            </div>
+            
+            <div class="filter-item">
+              <label class="filter-label">Traffic</label>
+              <select id="traffic-filter" class="select-input">
+                <option value="all">All</option>
+                <option value="true">Through Traffic</option>
+                <option value="false">Clear Shot</option>
+              </select>
+            </div>
+            
+            <div class="filter-item">
+              <label class="filter-label">Game Situation</label>
+              <select id="game-situation-filter" class="select-input">
+                <option value="all">All Situations</option>
+                <option value="5v5">5v5 Even Strength</option>
+                <option value="usa-powerplay">USA Powerplay</option>
+                <option value="canada-powerplay">Canada Powerplay</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Game Filters -->
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">
+            <i class="fas fa-sliders-h"></i>
+            Game Filters
+          </h3>
+          
+          <div class="filter-item">
+            <label class="filter-label">Teams</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="team-usa" value="United States" checked>
+                <span class="checkmark"></span>
+                <span class="checkbox-label">USA</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="team-canada" value="Canada" checked>
+                <span class="checkmark"></span>
+                <span class="checkbox-label">Canada</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="filter-item">
+            <label class="filter-label">Periods</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="period-1" value="1" checked>
+                <span class="checkmark"></span>
+                <span class="checkbox-label">1st</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="period-2" value="2" checked>
+                <span class="checkmark"></span>
+                <span class="checkbox-label">2nd</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="period-3" value="3" checked>
+                <span class="checkmark"></span>
+                <span class="checkbox-label">3rd</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="filter-item">
+            <label class="filter-label">Players</label>
+            <div class="player-dropdowns" id="player-dropdowns">
+              <select id="player-usa" class="select-input player-select" data-team="United States">
+                <option value="">All USA Players</option>
+              </select>
+              <select id="player-canada" class="select-input player-select" data-team="Canada">
+                <option value="">All Canada Players</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+
+
+
+      </div>
+
+      <!-- Right Side: Primary Rink Visualization -->
+      <div class="rink-area">
+        <!-- Statistics Bar (above rink) -->
+        <div class="stats-bar">
+          <div class="stats-bar-grid">
+            <div class="stat-card team1">
+              <span class="stat-value" id="team1-shots">-</span>
+              <span class="stat-label" id="team1-label">Team 1 Shots</span>
+            </div>
+            <div class="stat-card team2">
+              <span class="stat-value" id="team2-shots">-</span>
+              <span class="stat-label" id="team2-label">Team 2 Shots</span>
+            </div>
+            <div class="stat-card neutral">
+              <span class="stat-value" id="shooting-percentage">-</span>
+              <span class="stat-label">Shooting %</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="filtered-events">-</span>
+              <span class="stat-label">Total Events</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="active-player-count">-</span>
+              <span class="stat-label">Active Players</span>
+            </div>
+          </div>
+        </div>
+        
+        <div id="plot" class="rink-container"></div>
+        
+        <div class="loading-overlay" id="loading">
+          <div class="loading-spinner"></div>
+          <span class="loading-text">Loading hockey data...</span>
+        </div>
+        
+        <!-- Analysis Legend (under rink) -->
+        <div class="analysis-legend" id="analysis-legend">
+          <div class="legend-items" id="legend-items">
+            <!-- Legend items will be populated by JavaScript -->
+          </div>
+        </div>
+        
+        <!-- Time Control Bar (bottom of rink) -->
+        <div class="time-control-bar">
+          <div class="time-display" id="time-display">0:00 - 20:00</div>
+          <input type="range" id="time-range" min="0" max="100" value="0" class="time-slider">
+          
+          <!-- Animation Controls -->
+          <div class="animation-controls">
+            <div class="control-buttons">
+              <button id="play-pause" class="btn btn-play">
+                <i class="fas fa-play"></i>
+              </button>
+              <button id="reset" class="btn btn-reset">
+                <i class="fas fa-undo"></i>
+              </button>
+            </div>
+            <div class="speed-control">
+              <span class="speed-label">Speed</span>
+              <input type="range" id="speed-control" min="1" max="10" value="5" class="speed-slider">
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
   <script src="/static/js/rink_plot.js"></script>
 </body>
 </html>
+
